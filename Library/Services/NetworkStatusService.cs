@@ -3,13 +3,13 @@
     using System.Net;
     using Models;
 
-    public class NetworkStatusService
+    public static class NetworkStatusService
     {
         /// <summary>
         /// Check if there is internet connection
         /// </summary>
         /// <returns>If there is internet connection, it returns a successful response, if not it returns an unsuccessful response</returns>
-        public Response CheckConnection()
+        public static Response CheckConnection()
         {
             var client = new WebClient();
 

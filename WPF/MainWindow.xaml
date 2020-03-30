@@ -5,10 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WPF"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="838" Width="1550" WindowState="Maximized">
     <Grid>
-        <Label Content="Choose one country:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,20,0,0" FontFamily="Arial" FontSize="14"/>
-        <ComboBox HorizontalAlignment="Left" Margin="169,20,0,0" VerticalAlignment="Top" Width="200" Height="26" FontSize="14" FontFamily="Arial"/>
+        <Label Content="Choose one country:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,30,0,0" FontFamily="Arial" FontSize="14"/>
+        <ComboBox x:Name="cbCountries" HorizontalAlignment="Left" Margin="174,30,0,0" FontFamily="Arial" VerticalAlignment="Top" Height="26" FontSize="14" MinWidth="100" VerticalContentAlignment="Center" SelectionChanged="cbCountries_SelectionChanged"/>
+        <ProgressBar x:Name="pBStatus" HorizontalAlignment="Left" Height="20" Margin="30,769,0,-0.2" VerticalAlignment="Top" Width="250"/>
+        <Label x:Name="lblStatus" Content="" HorizontalAlignment="Left" Margin="285,769,0,0" VerticalAlignment="Top" FontFamily="Arial" FontSize="14"/>
+        <Label x:Name="lblName" Content="Label" HorizontalAlignment="Left" Margin="370,172,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="lblCapital" Content="Label" HorizontalAlignment="Left" Margin="370,227,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="lblRegion" Content="Label" HorizontalAlignment="Left" Margin="370,288,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="lblSubRegion" Content="Label" HorizontalAlignment="Left" Margin="370,362,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="lblPopulation" Content="Label" HorizontalAlignment="Left" Margin="370,415,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="lblGini" Content="Label" HorizontalAlignment="Left" Margin="370,476,0,0" VerticalAlignment="Top"/>
 
     </Grid>
 </Window>
