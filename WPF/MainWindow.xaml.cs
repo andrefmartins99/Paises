@@ -51,7 +51,11 @@ namespace WPF
 
             if (load == true)
             {
-                lblStatus.Content = "Data retrieved from api";
+                lblStatus.Content = "Data retrieved from api. Updating database...";
+
+                await DatabaseService.SaveData(Countries);
+                
+                lblStatus.Content = "Data retrieved from api. Database updated.";
             }
             else
             {

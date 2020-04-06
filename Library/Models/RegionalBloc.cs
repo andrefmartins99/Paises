@@ -13,5 +13,22 @@ namespace Library.Models
         public List<string> OtherAcronyms { get; set; }
 
         public List<string> OtherNames { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Name}";
+        }
+
+        public override bool Equals(object obj)
+        {
+            RegionalBloc regionalBloc = (RegionalBloc)obj;
+
+            if (regionalBloc == null)
+            {
+                return false;
+            }
+
+            return regionalBloc.Acronym == this.Acronym;
+        }
     }
 }
