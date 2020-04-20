@@ -1,19 +1,19 @@
-﻿using Library.Models;
-using System;
-using System.Collections.Generic;
-using System.Data.SQLite;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Library.Services
+﻿namespace Library.Services
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Data.SQLite;
+    using System.IO;
+    using System.Threading.Tasks;
+    using Models;
+
     public static class DatabaseService
     {
         /// <summary>
         /// Save the data retrieved from the api in the database
         /// </summary>
         /// <param name="Countries">List of countries</param>
+        /// <returns>Returns a task</returns>
         public static async Task SaveData(List<Country> Countries)
         {
             List<Language> Languages = new List<Language>();
@@ -124,6 +124,7 @@ namespace Library.Services
         /// Create the database
         /// </summary>
         /// <param name="command">sqlite command</param>
+        /// <returns>Returns a task</returns>
         private static async Task CreateDatabase(SQLiteCommand command)
         {
             await Task.Run(() =>
@@ -131,7 +132,7 @@ namespace Library.Services
                 try
                 {
                     //Table country
-                    command.CommandText = "create table if not exists country(alpha3code char(3) primary key, name varchar(100), alpha2code char(2), capital varchar(50), region varchar(10), subregion varchar(30), population int, demonym varchar(50), area real, gini real, native_name nvarchar(100), numeric_code varchar(3), flag blob, cioc varchar(3))";
+                    command.CommandText = "create table if not exists country(alpha3code varchar(3) primary key, name varchar(100), alpha2code varchar(2), capital varchar(50), region varchar(10), subregion varchar(30), population int, demonym varchar(50), area real, gini real, native_name nvarchar(100), numeric_code varchar(3), flag text, cioc varchar(3))";
                     command.ExecuteNonQuery();
 
                     //Table top_level_domain
@@ -147,7 +148,7 @@ namespace Library.Services
                     command.ExecuteNonQuery();
 
                     //Table lat_lng
-                    command.CommandText = "create table if not exists lat_lng(country_alpha3code char(3) primary key references country(alpha3code), lat varchar(20), lng varchar(20))";
+                    command.CommandText = "create table if not exists lat_lng(country_alpha3code char(3) primary key references country(alpha3code), lat real, lng real)";
                     command.ExecuteNonQuery();
 
                     //Table translation
@@ -205,7 +206,7 @@ namespace Library.Services
         /// Delete data from the database
         /// </summary>
         /// <param name="command">sqlite command</param>
-        /// <returns></returns>
+        /// <returns>Returns a task</returns>
         private static async Task DeleteData(SQLiteCommand command)
         {
             await Task.Run(() =>
@@ -291,6 +292,7 @@ namespace Library.Services
         /// <param name="Languages">list of distinct languages</param>
         /// <param name="Currencies">list of distinct currencies</param>
         /// <param name="RegionalBlocs">list of distinct regional blocs</param>
+        /// <returns>Returns a task</returns>
         private static async Task InsertData(SQLiteCommand command, List<Country> Countries, List<Language> Languages, List<Currency> Currencies, List<RegionalBloc> RegionalBlocs)
         {
             await Task.Run(() =>
@@ -421,6 +423,353 @@ namespace Library.Services
                     DialogService.ShowMessageBox("Erro", e.Message);
                 }
             });
+        }
+
+        /// <summary>
+        /// Gets the data from the database in a list of objects of the type Country
+        /// </summary>
+        /// <param name="progress">progress report</param>
+        /// <returns>Returns a list of objects of the type Country</returns>
+        public async static Task<List<Country>> GetData(IProgress<ProgressReport> progress)
+        {
+            List<Country> Countries = new List<Country>();
+
+            if (!Directory.Exists("DB"))
+            {
+                Directory.CreateDirectory("DB");
+            }
+
+            var path = @"DB\countries.sqlite";
+
+            using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + path))
+            {
+                connection.Open();
+
+                using (SQLiteCommand command = new SQLiteCommand(connection))
+                {
+                    await CreateDatabase(command);
+                }
+
+                Countries = await RetrieveDataFromDatabase(connection, progress);
+            }
+
+            return Countries;
+        }
+
+        /// <summary>
+        /// Retrieves the data from the database
+        /// </summary>
+        /// <param name="connection">sqlconnection</param>
+        /// <param name="progress">progress report</param>
+        /// <returns>Returns a list of objects of the type Country</returns>
+        private async static Task<List<Country>> RetrieveDataFromDatabase(SQLiteConnection connection, IProgress<ProgressReport> progress)
+        {
+            List<Country> Countries = new List<Country>();
+            ProgressReport report = new ProgressReport();
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    using (SQLiteCommand command1 = new SQLiteCommand(connection))
+                    {
+                        //Get data from the table country
+                        command1.CommandText = "select alpha3code, name, alpha2code, capital, region, subregion, population, demonym, area, gini, native_name, numeric_code, flag, cioc from country";
+
+                        using (SQLiteDataReader readerCountry = command1.ExecuteReader())
+                        {
+                            while (readerCountry.Read())
+                            {
+                                Country country = new Country
+                                {
+                                    Name = (string)readerCountry["name"],
+                                    Alpha2Code = (string)readerCountry["alpha2code"],
+                                    Alpha3Code = (string)readerCountry["alpha3code"],
+                                    Capital = (string)readerCountry["capital"],
+                                    Region = (string)readerCountry["region"],
+                                    Subregion = (string)readerCountry["subregion"],
+                                    Population = (int)readerCountry["population"],
+                                    Demonym = (string)readerCountry["demonym"],
+                                    Area = (double)readerCountry["area"],
+                                    Gini = (double)readerCountry["gini"],
+                                    NativeName = (string)readerCountry["native_name"],
+                                    NumericCode = (string)readerCountry["numeric_code"],
+                                    Flag = (string)readerCountry["flag"],
+                                    Cioc = (string)readerCountry["cioc"]
+                                };
+
+                                country.Name.Replace("´", "'");
+                                country.Capital.Replace("´", "'");
+                                country.NativeName.Replace("´", "'");
+
+                                using (SQLiteCommand command2 = new SQLiteCommand(connection))
+                                {
+                                    //Get data from the table top_level_domain
+                                    command2.CommandText = $"select top_level_domain from top_level_domain where country_alpha3code='{country.Alpha3Code}'";
+
+                                    using (SQLiteDataReader readerTopLevelDomain = command2.ExecuteReader())
+                                    {
+                                        List<string> TopLevelDomain = new List<string>();
+
+                                        while (readerTopLevelDomain.Read())
+                                        {
+                                            string topLevelDomain = (string)readerTopLevelDomain["top_level_domain"];
+
+                                            TopLevelDomain.Add(topLevelDomain);
+                                        }
+
+                                        country.TopLevelDomain = TopLevelDomain;
+                                    }
+
+
+                                    //Get data from the table calling_code
+                                    command2.CommandText = $"select calling_codes from calling_code where country_alpha3code='{country.Alpha3Code}'";
+
+                                    using (SQLiteDataReader readerCallingCodes = command2.ExecuteReader())
+                                    {
+                                        List<string> CallingCodes = new List<string>();
+
+                                        while (readerCallingCodes.Read())
+                                        {
+                                            string callingCode = (string)readerCallingCodes["calling_codes"];
+
+                                            CallingCodes.Add(callingCode);
+                                        }
+
+                                        country.CallingCodes = CallingCodes;
+                                    }
+
+                                    //Get data from the table alt_spelling
+                                    command2.CommandText = $"select alt_spellings from alt_spelling where country_alpha3code='{country.Alpha3Code}'";
+
+                                    using (SQLiteDataReader readerAltSpellings = command2.ExecuteReader())
+                                    {
+                                        List<string> AltSpellings = new List<string>();
+
+                                        while (readerAltSpellings.Read())
+                                        {
+                                            string altSpelling = (string)readerAltSpellings["alt_spellings"];
+
+                                            altSpelling.Replace("´", "'");
+
+                                            AltSpellings.Add(altSpelling);
+                                        }
+
+                                        country.AltSpellings = AltSpellings;
+                                    }
+
+                                    //Get data from the table lat_lng
+                                    command2.CommandText = $"select lat, lng from lat_lng where country_alpha3code='{country.Alpha3Code}'";
+
+                                    using (SQLiteDataReader readerLatLng = command2.ExecuteReader())
+                                    {
+                                        List<double> LatLng = new List<double>();
+
+                                        while (readerLatLng.Read())
+                                        {
+                                            double lat = (double)readerLatLng["lat"];
+                                            double lng = (double)readerLatLng["lng"];
+
+                                            LatLng.Add(lat);
+                                            LatLng.Add(lng);
+                                        }
+
+                                        country.Latlng = LatLng;
+                                    }
+
+                                    //Get data from the table country_timezone
+                                    command2.CommandText = $"select timezones from country_timezone where country_alpha3code='{country.Alpha3Code}'";
+
+                                    using (SQLiteDataReader readerTimezone = command2.ExecuteReader())
+                                    {
+                                        List<string> Timezones = new List<string>();
+
+                                        while (readerTimezone.Read())
+                                        {
+                                            string timezone = (string)readerTimezone["timezones"];
+
+                                            Timezones.Add(timezone);
+                                        }
+
+                                        country.Timezones = Timezones;
+                                    }
+
+                                    //Get data from the table country_border
+                                    command2.CommandText = $"select borders from country_border where country_alpha3code='{country.Alpha3Code}'";
+
+                                    using (SQLiteDataReader readerBorder = command2.ExecuteReader())
+                                    {
+                                        List<string> Borders = new List<string>();
+
+                                        while (readerBorder.Read())
+                                        {
+                                            string border = (string)readerBorder["borders"];
+
+                                            Borders.Add(border);
+                                        }
+
+                                        country.Borders = Borders;
+                                    }
+
+                                    //Get data from the table translation
+                                    command2.CommandText = $"select de, es, fr, ja, it, br, pt, nl, hr, fa from translation where country_alpha3code='{country.Alpha3Code}'";
+
+                                    using (SQLiteDataReader readerTranslation = command2.ExecuteReader())
+                                    {
+                                        Translation translation = new Translation();
+
+                                        while (readerTranslation.Read())
+                                        {
+                                            translation.De = (string)readerTranslation["de"];
+                                            translation.Es = (string)readerTranslation["es"];
+                                            translation.Fr = (string)readerTranslation["fr"];
+                                            translation.Ja = (string)readerTranslation["ja"];
+                                            translation.It = (string)readerTranslation["it"];
+                                            translation.Br = (string)readerTranslation["br"];
+                                            translation.Pt = (string)readerTranslation["pt"];
+                                            translation.Nl = (string)readerTranslation["nl"];
+                                            translation.Hr = (string)readerTranslation["hr"];
+                                            translation.Fa = (string)readerTranslation["fa"];
+                                        }
+
+                                        translation.Fr.Replace("´", "'");
+                                        translation.It.Replace("´", "'");
+
+                                        if (translation.It == string.Empty)
+                                        {
+                                            translation.It = null;
+                                        }
+
+                                        if (translation.Fr == string.Empty)
+                                        {
+                                            translation.Fr = null;
+                                        }
+
+                                        country.Translations = translation;
+                                    }
+
+                                    //Get data from the tables country_currency and currency
+                                    command2.CommandText = $"select code_currency, name, symbol from currency inner join country_currency on code=code_currency where country_alpha3code='{country.Alpha3Code}'";
+
+                                    using (SQLiteDataReader readerCurrency = command2.ExecuteReader())
+                                    {
+                                        List<Currency> Currencies = new List<Currency>();
+
+                                        while (readerCurrency.Read())
+                                        {
+                                            Currency currency = new Currency
+                                            {
+                                                Code = (string)readerCurrency["code_currency"],
+                                                Name = (string)readerCurrency["name"],
+                                                Symbol = (string)readerCurrency["symbol"]
+                                            };
+
+                                            currency.Name.Replace("´", "'");
+
+                                            Currencies.Add(currency);
+                                        }
+
+                                        country.Currencies = Currencies;
+                                    }
+
+                                    //Get data from the tables language and country_language
+                                    command2.CommandText = $"select iso639_1_language, iso639_2, name, native_name from language inner join country_language on iso639_1=iso639_1_language where country_alpha3code='{country.Alpha3Code}'";
+
+                                    using (SQLiteDataReader readerLanguage = command2.ExecuteReader())
+                                    {
+                                        List<Language> Languages = new List<Language>();
+
+                                        while (readerLanguage.Read())
+                                        {
+                                            Language language = new Language
+                                            {
+                                                Iso639_1 = (string)readerLanguage["iso639_1_language"],
+                                                Iso639_2 = (string)readerLanguage["iso639_2"],
+                                                Name = (string)readerLanguage["name"],
+                                                NativeName = (string)readerLanguage["native_name"]
+                                            };
+
+                                            language.NativeName.Replace("´", "'");
+
+                                            Languages.Add(language);
+                                        }
+
+                                        country.Languages = Languages;
+                                    }
+
+                                    //Get data from the tables regional_bloc and country_regional_bloc
+                                    command2.CommandText = $"select acronym_regional_bloc, name from regional_bloc inner join country_regional_bloc on acronym=acronym_regional_bloc where country_alpha3code='{country.Alpha3Code}'";
+
+                                    using (SQLiteDataReader readerRegionalBloc = command2.ExecuteReader())
+                                    {
+                                        List<RegionalBloc> RegionalBlocs = new List<RegionalBloc>();
+
+                                        while (readerRegionalBloc.Read())
+                                        {
+                                            RegionalBloc regionalBloc = new RegionalBloc
+                                            {
+                                                Acronym = (string)readerRegionalBloc["acronym_regional_bloc"],
+                                                Name = (string)readerRegionalBloc["name"]
+                                            };
+
+                                            using (SQLiteCommand command3 = new SQLiteCommand(connection))
+                                            {
+                                                //Get data from the table other_acronym
+                                                command3.CommandText = $"select other_acronyms from other_acronym inner join regional_bloc on acronym=acronym_regional_bloc where acronym_regional_bloc='{regionalBloc.Acronym}'";
+
+                                                using (SQLiteDataReader readerOtherAcronym = command3.ExecuteReader())
+                                                {
+                                                    List<string> OtherAcronyms = new List<string>();
+
+                                                    while (readerOtherAcronym.Read())
+                                                    {
+                                                        string otherAcronym = (string)readerOtherAcronym["other_acronyms"];
+
+                                                        OtherAcronyms.Add(otherAcronym);
+                                                    }
+
+                                                    regionalBloc.OtherAcronyms = OtherAcronyms;
+                                                }
+
+                                                //Get data from the table other_name 
+                                                command3.CommandText = $"select other_names from other_name inner join regional_bloc on acronym=acronym_regional_bloc where acronym_regional_bloc='{regionalBloc.Acronym}'";
+
+                                                using (SQLiteDataReader readerOtherName = command3.ExecuteReader())
+                                                {
+                                                    List<string> OtherNames = new List<string>();
+
+                                                    while (readerOtherName.Read())
+                                                    {
+                                                        string otherName = (string)readerOtherName["other_names"];
+
+                                                        OtherNames.Add(otherName);
+                                                    }
+
+                                                    regionalBloc.OtherNames = OtherNames;
+                                                }
+                                            }
+
+                                            RegionalBlocs.Add(regionalBloc);
+                                        }
+
+                                        country.RegionalBlocs = RegionalBlocs;
+                                    }
+
+                                    Countries.Add(country);
+                                    report.PercentageComplete = (Countries.Count * 100) / 250;
+                                    progress.Report(report);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    DialogService.ShowMessageBox("Erro", e.Message);
+                }
+            });
+
+            return Countries;
         }
     }
 }

@@ -1,22 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using Library.Services;
-using Library.Models;
-
-namespace WPF
+﻿namespace WPF
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using System.Windows;
+    using System.Windows.Controls;
+    using Library.Services;
+    using Library.Models;
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -43,7 +34,7 @@ namespace WPF
             }
             else
             {
-
+                await LoadLocalData();
                 load = false;
             }
 
@@ -54,12 +45,19 @@ namespace WPF
                 lblStatus.Content = "Data retrieved from api. Updating database...";
 
                 await DatabaseService.SaveData(Countries);
-                
-                lblStatus.Content = "Data retrieved from api. Database updated.";
+
+                lblStatus.Content = "Database updated.";
             }
             else
             {
-                lblStatus.Content = "Data retrieved from database";
+                if (Countries.Count > 0)
+                {
+                    lblStatus.Content = "No internet connection. Data retrieved from database.";
+                }
+                else
+                {
+                    lblStatus.Content = "No internet connection. No data found in the database. The first run of the program needs to be made with internet connection. Please try again later.";
+                }
             }
         }
 
@@ -75,6 +73,18 @@ namespace WPF
             var response = await ApiService.GetData("http://restcountries.eu", "/rest/v2/all", progress);
 
             Countries = (List<Country>)response.Result;
+        }
+
+        /// <summary>
+        /// Get the data from the database
+        /// </summary>
+        /// <returns></returns>
+        private async Task LoadLocalData()
+        {
+            Progress<ProgressReport> progress = new Progress<ProgressReport>();
+            progress.ProgressChanged += ReportProgress;
+
+            Countries = await DatabaseService.GetData(progress);
         }
 
         private void ReportProgress(object sender, ProgressReport e)

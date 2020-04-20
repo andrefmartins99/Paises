@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using Library.Models;
-using Newtonsoft.Json;
-
-namespace Library.Services
+﻿namespace Library.Services
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Net.Http;
+    using System.Threading.Tasks;
+    using Models;
+    using Newtonsoft.Json;
+
     public static class ApiService
     {
         /// <summary>
@@ -15,7 +14,7 @@ namespace Library.Services
         /// </summary>
         /// <param name="url">url of the api</param>
         /// <param name="controller">folder where the data is</param>
-        /// <param name="progress"></param>
+        /// <param name="progress">progress report</param>
         /// <returns>Returns a response, that will have as result a list of countries(if there is no error)</returns>
         public static async Task<Response> GetData(string url, string controller, IProgress<ProgressReport> progress)
         {
@@ -43,8 +42,7 @@ namespace Library.Services
                 };
 
                 var countries = JsonConvert.DeserializeObject<List<Country>>(result, jsonSettings);
-                report.Countries = countries;
-                report.PercentageComplete = (countries.Count * 100) / report.Countries.Count;
+                report.PercentageComplete = (countries.Count * 100) / 250;
                 progress.Report(report);
 
                 return new Response

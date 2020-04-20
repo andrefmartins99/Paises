@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Library.Models
+﻿namespace Library.Models
 {
+    using System.Collections.Generic;
+
     public class Country
     {
         public string Name { get; set; }
