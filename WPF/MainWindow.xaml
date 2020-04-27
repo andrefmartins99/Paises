@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WPF"
         mc:Ignorable="d"
-        Title="MainWindow" Height="838" Width="1550" WindowState="Maximized">
+        Title="MainWindow" Height="838" Width="1550" WindowState="Maximized" Closing="Window_Closing">
     <Grid>
         <Label Content="Choose one country:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,30,0,0" FontFamily="Arial" FontSize="14"/>
         <ComboBox x:Name="cbCountries" HorizontalAlignment="Left" Margin="174,30,0,0" FontFamily="Arial" VerticalAlignment="Top" Height="26" FontSize="14" MinWidth="100" VerticalContentAlignment="Center" SelectionChanged="cbCountries_SelectionChanged"/>
@@ -17,6 +17,6 @@
         <Label x:Name="lblSubRegion" Content="Label" HorizontalAlignment="Left" Margin="370,362,0,0" VerticalAlignment="Top"/>
         <Label x:Name="lblPopulation" Content="Label" HorizontalAlignment="Left" Margin="370,415,0,0" VerticalAlignment="Top"/>
         <Label x:Name="lblGini" Content="Label" HorizontalAlignment="Left" Margin="370,476,0,0" VerticalAlignment="Top"/>
-
+        <Image x:Name="flagimage" HorizontalAlignment="Left" Height="360" Margin="845,198,0,0" VerticalAlignment="Top" Width="516"/>
     </Grid>
 </Window>

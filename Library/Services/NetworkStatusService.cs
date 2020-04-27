@@ -11,12 +11,12 @@
         /// <returns>If there is internet connection, it returns a successful response, if not it returns an unsuccessful response</returns>
         public static Response CheckConnection()
         {
-            var client = new WebClient();
-
             try
             {
-                using (client.OpenRead("http://clients3.google.com/generate_204"))
+                using (WebClient client = new WebClient())
                 {
+                    client.OpenRead("http://clients3.google.com/generate_204");
+
                     return new Response
                     {
                         IsSuccess = true
@@ -27,8 +27,7 @@
             {
                 return new Response
                 {
-                    IsSuccess = false,
-                    Message = "No Internet connection"
+                    IsSuccess = false
                 };
             }
         }

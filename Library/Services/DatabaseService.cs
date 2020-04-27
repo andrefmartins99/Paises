@@ -13,8 +13,9 @@
         /// Save the data retrieved from the api in the database
         /// </summary>
         /// <param name="Countries">List of countries</param>
+        /// <param name="progress">Progress report</param>
         /// <returns>Returns a task</returns>
-        public static async Task SaveData(List<Country> Countries)
+        public static async Task SaveData(List<Country> Countries, IProgress<ProgressReport> progress)
         {
             List<Language> Languages = new List<Language>();
             List<Currency> Currencies = new List<Currency>();
@@ -39,7 +40,7 @@
 
                     await DeleteData(command);
 
-                    await InsertData(command, Countries, Languages, Currencies, RegionalBlocs);
+                    await InsertData(command, Countries, Languages, Currencies, RegionalBlocs, progress);
                 }
             }
         }
@@ -47,10 +48,10 @@
         /// <summary>
         /// Get distinct languages, currencies and regional blocs
         /// </summary>
-        /// <param name="Countries">list of countries</param>
-        /// <param name="Languages">list of languages (empty)</param>
-        /// <param name="Currencies">list of currencies (empty)</param>
-        /// <param name="RegionalBlocs">list of regional blocs (empty)</param>
+        /// <param name="Countries">List of countries</param>
+        /// <param name="Languages">List of languages (empty)</param>
+        /// <param name="Currencies">List of currencies (empty)</param>
+        /// <param name="RegionalBlocs">List of regional blocs (empty)</param>
         private static void OrganizeData(List<Country> Countries, List<Language> Languages, List<Currency> Currencies, List<RegionalBloc> RegionalBlocs)
         {
             //Get distinct languages
@@ -123,7 +124,7 @@
         /// <summary>
         /// Create the database
         /// </summary>
-        /// <param name="command">sqlite command</param>
+        /// <param name="command">Sqlite command</param>
         /// <returns>Returns a task</returns>
         private static async Task CreateDatabase(SQLiteCommand command)
         {
@@ -197,7 +198,7 @@
                 }
                 catch (Exception e)
                 {
-                    DialogService.ShowMessageBox("Erro", e.Message);
+                    DialogService.ShowMessageBox("Error", e.Message);
                 }
             });
         }
@@ -205,7 +206,7 @@
         /// <summary>
         /// Delete data from the database
         /// </summary>
-        /// <param name="command">sqlite command</param>
+        /// <param name="command">Sqlite command</param>
         /// <returns>Returns a task</returns>
         private static async Task DeleteData(SQLiteCommand command)
         {
@@ -279,40 +280,31 @@
                 }
                 catch (Exception e)
                 {
-                    DialogService.ShowMessageBox("Erro", e.Message);
+                    DialogService.ShowMessageBox("Error", e.Message);
                 }
             });
         }
 
+
         /// <summary>
         /// Insert the data into the database
         /// </summary>
-        /// <param name="command">sqlite command</param>
-        /// <param name="Countries">list of countries</param>
-        /// <param name="Languages">list of distinct languages</param>
-        /// <param name="Currencies">list of distinct currencies</param>
-        /// <param name="RegionalBlocs">list of distinct regional blocs</param>
+        /// <param name="command">Sqlite command</param>
+        /// <param name="Countries">List of countries</param>
+        /// <param name="Languages">List of distinct languages</param>
+        /// <param name="Currencies">List of distinct currencies</param>
+        /// <param name="RegionalBlocs">List of distinct regional blocs</param>
+        /// <param name="progress">Progress report</param>
         /// <returns>Returns a task</returns>
-        private static async Task InsertData(SQLiteCommand command, List<Country> Countries, List<Language> Languages, List<Currency> Currencies, List<RegionalBloc> RegionalBlocs)
+        private static async Task InsertData(SQLiteCommand command, List<Country> Countries, List<Language> Languages, List<Currency> Currencies, List<RegionalBloc> RegionalBlocs, IProgress<ProgressReport> progress)
         {
+            ProgressReport report = new ProgressReport();
+            int count = 0;
+
             await Task.Run(() =>
             {
                 try
                 {
-                    //Fill table language with data
-                    foreach (var language in Languages)
-                    {
-                        command.CommandText = $"insert into language values('{language.Iso639_1}','{language.Iso639_2}','{language.Name}','{language.NativeName.Replace("'", "´")}')";
-                        command.ExecuteNonQuery();
-                    }
-
-                    //Fill table currency with data
-                    foreach (var currency in Currencies)
-                    {
-                        command.CommandText = $"insert into currency values('{currency.Code}','{currency.Name.Replace("'", "´")}','{currency.Symbol}')";
-                        command.ExecuteNonQuery();
-                    }
-
                     foreach (var regionalBloc in RegionalBlocs)
                     {
                         //Fill table regional_bloc with data
@@ -333,6 +325,30 @@
                             command.ExecuteNonQuery();
                         }
                     }
+
+                    progress.Report(report);
+
+                    //Fill table language with data
+                    foreach (var language in Languages)
+                    {
+                        command.CommandText = $"insert into language values('{language.Iso639_1}','{language.Iso639_2}','{language.Name}','{language.NativeName.Replace("'", "´")}')";
+                        command.ExecuteNonQuery();
+                    }
+
+                    count += 3;
+                    report.PercentageComplete = (count * 100) / 256;
+                    progress.Report(report);
+
+                    //Fill table currency with data
+                    foreach (var currency in Currencies)
+                    {
+                        command.CommandText = $"insert into currency values('{currency.Code}','{currency.Name.Replace("'", "´")}','{currency.Symbol}')";
+                        command.ExecuteNonQuery();
+                    }
+
+                    count += 3;
+                    report.PercentageComplete = (count * 100) / 256;
+                    progress.Report(report);
 
                     foreach (var country in Countries)
                     {
@@ -416,19 +432,23 @@
                             command.CommandText = $"insert into country_regional_bloc values('{country.Alpha3Code}','{regionalBloc.Acronym}')";
                             command.ExecuteNonQuery();
                         }
+
+                        count++;
+                        report.PercentageComplete = (count * 100) / 256;
+                        progress.Report(report);
                     }
                 }
                 catch (Exception e)
                 {
-                    DialogService.ShowMessageBox("Erro", e.Message);
+                    DialogService.ShowMessageBox("Error", e.Message);
                 }
             });
         }
 
         /// <summary>
-        /// Gets the data from the database in a list of objects of the type Country
+        /// Get the data from the database in a list of objects of the type Country
         /// </summary>
-        /// <param name="progress">progress report</param>
+        /// <param name="progress">Progress report</param>
         /// <returns>Returns a list of objects of the type Country</returns>
         public async static Task<List<Country>> GetData(IProgress<ProgressReport> progress)
         {
@@ -457,10 +477,10 @@
         }
 
         /// <summary>
-        /// Retrieves the data from the database
+        /// Retrieve the data from the database
         /// </summary>
-        /// <param name="connection">sqlconnection</param>
-        /// <param name="progress">progress report</param>
+        /// <param name="connection">Sqlconnection</param>
+        /// <param name="progress">Progress report</param>
         /// <returns>Returns a list of objects of the type Country</returns>
         private async static Task<List<Country>> RetrieveDataFromDatabase(SQLiteConnection connection, IProgress<ProgressReport> progress)
         {
@@ -754,18 +774,18 @@
 
                                         country.RegionalBlocs = RegionalBlocs;
                                     }
-
-                                    Countries.Add(country);
-                                    report.PercentageComplete = (Countries.Count * 100) / 250;
-                                    progress.Report(report);
                                 }
+
+                                Countries.Add(country);
+                                report.PercentageComplete = (Countries.Count * 100) / 250;
+                                progress.Report(report);
                             }
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    DialogService.ShowMessageBox("Erro", e.Message);
+                    DialogService.ShowMessageBox("Error", e.Message);
                 }
             });
 

@@ -12,9 +12,9 @@
         /// <summary>
         /// Connect to the api and retrieve the data in it
         /// </summary>
-        /// <param name="url">url of the api</param>
-        /// <param name="controller">folder where the data is</param>
-        /// <param name="progress">progress report</param>
+        /// <param name="url">Url of the api</param>
+        /// <param name="controller">Folder where the data is</param>
+        /// <param name="progress">Progress report</param>
         /// <returns>Returns a response, that will have as result a list of countries(if there is no error)</returns>
         public static async Task<Response> GetData(string url, string controller, IProgress<ProgressReport> progress)
         {
