@@ -1,4 +1,6 @@
-﻿namespace Library.Models
+﻿using System.Windows.Data;
+
+namespace Library.Models
 {
     public class Language
     {
@@ -17,14 +19,19 @@
 
         public override bool Equals(object obj)
         {
-            Language language = (Language)obj;
-
-            if (language == null)
+            if (obj != BindingOperations.DisconnectedSource)
             {
-                return false;
+                Language language = (Language)obj;
+
+                if (language == null)
+                {
+                    return false;
+                }
+
+                return language.Iso639_2 == this.Iso639_2;
             }
 
-            return language.Iso639_2 == this.Iso639_2;
+            return false;
         }
     }
 }

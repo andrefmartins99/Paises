@@ -1,4 +1,6 @@
-﻿namespace Library.Models
+﻿using System.Windows.Data;
+
+namespace Library.Models
 {
     public class Currency
     {
@@ -15,14 +17,19 @@
 
         public override bool Equals(object obj)
         {
-            Currency currency = (Currency)obj;
-
-            if (currency == null)
+            if (obj != BindingOperations.DisconnectedSource)
             {
-                return false;
+                Currency currency = (Currency)obj;
+
+                if (currency == null)
+                {
+                    return false;
+                }
+
+                return currency.Code == this.Code;
             }
 
-            return currency.Code == this.Code;
+            return false;
         }
     }
 }

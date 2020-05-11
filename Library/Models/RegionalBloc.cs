@@ -1,6 +1,7 @@
 ﻿namespace Library.Models
 {
     using System.Collections.Generic;
+    using System.Windows.Data;
 
     public class RegionalBloc
     {
@@ -19,14 +20,19 @@
 
         public override bool Equals(object obj)
         {
-            RegionalBloc regionalBloc = (RegionalBloc)obj;
-
-            if (regionalBloc == null)
+            if (obj != BindingOperations.DisconnectedSource)
             {
-                return false;
+                RegionalBloc regionalBloc = (RegionalBloc)obj;
+
+                if (regionalBloc == null)
+                {
+                    return false;
+                }
+
+                return regionalBloc.Acronym == this.Acronym;
             }
 
-            return regionalBloc.Acronym == this.Acronym;
+            return false;
         }
     }
 }
