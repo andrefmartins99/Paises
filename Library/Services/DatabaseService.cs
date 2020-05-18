@@ -39,9 +39,9 @@
                     await CreateDatabase(command);
 
                     await DeleteData(command);
-
-                    await InsertData(command, Countries, Languages, Currencies, RegionalBlocs, progress);
                 }
+
+                await InsertData(Countries, Languages, Currencies, RegionalBlocs, progress, connection);
             }
         }
 
@@ -133,67 +133,67 @@
                 try
                 {
                     //Table country
-                    command.CommandText = "create table if not exists country(alpha3code varchar(3) primary key, name varchar(100), alpha2code varchar(2), capital varchar(50), region varchar(10), subregion varchar(30), population int, demonym varchar(50), area real, gini real, native_name nvarchar(100), numeric_code varchar(3), flag text, cioc varchar(3))";
+                    command.CommandText = "create table if not exists countries(alpha3code char(3) primary key, name varchar(100), alpha2code varchar(2), capital varchar(50), region varchar(10), subregion varchar(30), population int, demonym varchar(50), area real, gini real, native_name nvarchar(100), numeric_code varchar(3), flag text, cioc varchar(3))";
                     command.ExecuteNonQueryAsync();
 
                     //Table top_level_domain
-                    command.CommandText = "create table if not exists top_level_domain(id integer primary key autoincrement, top_level_domain varchar(3), country_alpha3code char(3) references country(alpha3code))";
+                    command.CommandText = "create table if not exists top_level_domains(id integer primary key autoincrement, top_level_domain varchar(3), country_alpha3code char(3) references countries(alpha3code))";
                     command.ExecuteNonQueryAsync();
 
                     //Table calling_code
-                    command.CommandText = "create table if not exists calling_code(id integer primary key autoincrement, calling_codes varchar(5), country_alpha3code char(3) references country(alpha3code))";
+                    command.CommandText = "create table if not exists calling_codes(id integer primary key autoincrement, calling_codes varchar(5), country_alpha3code char(3) references countries(alpha3code))";
                     command.ExecuteNonQueryAsync();
 
                     //Table alt_spelling
-                    command.CommandText = "create table if not exists alt_spelling(id integer primary key autoincrement, alt_spellings nvarchar(100), country_alpha3code char(3) references country(alpha3code))";
+                    command.CommandText = "create table if not exists alt_spellings(id integer primary key autoincrement, alt_spellings nvarchar(100), country_alpha3code char(3) references countries(alpha3code))";
                     command.ExecuteNonQueryAsync();
 
                     //Table lat_lng
-                    command.CommandText = "create table if not exists lat_lng(country_alpha3code char(3) primary key references country(alpha3code), lat real, lng real)";
+                    command.CommandText = "create table if not exists lat_lng(country_alpha3code char(3) primary key references countries(alpha3code), lat real, lng real)";
                     command.ExecuteNonQueryAsync();
 
                     //Table translation
-                    command.CommandText = "create table if not exists translation(country_alpha3code char(3) primary key references country(alpha3code), de nvarchar(100), es nvarchar(100), fr nvarchar(100), ja nvarchar(100), it nvarchar(100), br nvarchar(100), pt nvarchar(100), nl nvarchar(100), hr nvarchar(100), fa nvarchar(100))";
+                    command.CommandText = "create table if not exists translations(country_alpha3code char(3) primary key references countries(alpha3code), de nvarchar(100), es nvarchar(100), fr nvarchar(100), ja nvarchar(100), it nvarchar(100), br nvarchar(100), pt nvarchar(100), nl nvarchar(100), hr nvarchar(100), fa nvarchar(100))";
                     command.ExecuteNonQueryAsync();
 
                     //Table country_border
-                    command.CommandText = "create table if not exists country_border(country_alpha3code char(3) references country(alpha3code), borders varchar(3), primary key(country_alpha3code, borders))";
+                    command.CommandText = "create table if not exists country_borders(country_alpha3code char(3) references countries(alpha3code), borders varchar(3), primary key(country_alpha3code, borders))";
                     command.ExecuteNonQueryAsync();
 
                     //Table country_timezone
-                    command.CommandText = "create table if not exists country_timezone(country_alpha3code char(3) references country(alpha3code), timezones varchar(9), primary key(country_alpha3code, timezones))";
+                    command.CommandText = "create table if not exists country_timezones(country_alpha3code char(3) references countries(alpha3code), timezones varchar(9), primary key(country_alpha3code, timezones))";
                     command.ExecuteNonQueryAsync();
 
                     //Table language
-                    command.CommandText = "create table if not exists language(iso639_1 varchar(5) primary key, iso639_2 varchar(5), name varchar(50), native_name nvarchar(50))";
+                    command.CommandText = "create table if not exists languages(iso639_1 varchar(5) primary key, iso639_2 varchar(5), name varchar(50), native_name nvarchar(50))";
                     command.ExecuteNonQueryAsync();
 
                     //Table country_language
-                    command.CommandText = "create table if not exists country_language(country_alpha3code char(3) references country(alpha3code), iso639_1_language varchar(5) references language(iso639_1), primary key(country_alpha3code, iso639_1_language))";
+                    command.CommandText = "create table if not exists country_languages(country_alpha3code char(3) references countries(alpha3code), iso639_1_language varchar(5) references languages(iso639_1), primary key(country_alpha3code, iso639_1_language))";
                     command.ExecuteNonQueryAsync();
 
                     //Table currency
-                    command.CommandText = "create table if not exists currency(code varchar(5) primary key, name varchar(50), symbol nvarchar(5))";
+                    command.CommandText = "create table if not exists currencies(id integer primary key autoincrement, code varchar(10), name varchar(50), symbol nvarchar(5))";
                     command.ExecuteNonQueryAsync();
 
                     //Table country_currency
-                    command.CommandText = "create table if not exists country_currency(country_alpha3code char(3) references country(alpha3code), code_currency varchar(5) references currency(code), primary key(country_alpha3code, code_currency))";
+                    command.CommandText = "create table if not exists country_currencies(country_alpha3code char(3) references countries(alpha3code), id_currency integer references currencies(id), primary key(country_alpha3code, id_currency))";
                     command.ExecuteNonQueryAsync();
 
                     //Table regional_bloc
-                    command.CommandText = "create table if not exists regional_bloc(acronym varchar(10) primary key, name varchar(50))";
+                    command.CommandText = "create table if not exists regional_blocs(acronym varchar(10) primary key, name varchar(50))";
                     command.ExecuteNonQueryAsync();
 
                     //Table country_regional_bloc
-                    command.CommandText = "create table if not exists country_regional_bloc(country_alpha3code char(3) references country(alpha3code), acronym_regional_bloc varchar(10) references regional_bloc(acronym), primary key(country_alpha3code, acronym_regional_bloc))";
+                    command.CommandText = "create table if not exists country_regional_blocs(country_alpha3code char(3) references countries(alpha3code), acronym_regional_bloc varchar(10) references regional_blocs(acronym), primary key(country_alpha3code, acronym_regional_bloc))";
                     command.ExecuteNonQueryAsync();
 
                     //Table other_acronym
-                    command.CommandText = "create table if not exists other_acronym(id integer primary key autoincrement, other_acronyms varchar(10), acronym_regional_bloc varchar(10) references regional_bloc(acronym))";
+                    command.CommandText = "create table if not exists other_acronyms(id integer primary key autoincrement, other_acronyms varchar(10), acronym_regional_bloc varchar(10) references regional_blocs(acronym))";
                     command.ExecuteNonQueryAsync();
 
                     //Table other_name
-                    command.CommandText = "create table if not exists other_name(id integer primary key autoincrement, other_names nvarchar(100), acronym_regional_bloc varchar(10) references regional_bloc(acronym))";
+                    command.CommandText = "create table if not exists other_names(id integer primary key autoincrement, other_names nvarchar(100), acronym_regional_bloc varchar(10) references regional_blocs(acronym))";
                     command.ExecuteNonQueryAsync();
                 }
                 catch (Exception e)
@@ -215,27 +215,27 @@
                 try
                 {
                     //Delete data from table country_regional_bloc
-                    command.CommandText = "delete from country_regional_bloc";
+                    command.CommandText = "delete from country_regional_blocs";
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table country_currency
-                    command.CommandText = "delete from country_currency";
+                    command.CommandText = "delete from country_currencies";
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table country_language
-                    command.CommandText = "delete from country_language";
+                    command.CommandText = "delete from country_languages";
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table country_timezone
-                    command.CommandText = "delete from country_timezone";
+                    command.CommandText = "delete from country_timezones";
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table country_border
-                    command.CommandText = "delete from country_border";
+                    command.CommandText = "delete from country_borders";
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table translation
-                    command.CommandText = "delete from translation";
+                    command.CommandText = "delete from translations";
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table lat_lng
@@ -243,39 +243,39 @@
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table alt_spelling
-                    command.CommandText = "delete from alt_spelling";
+                    command.CommandText = "delete from alt_spellings";
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table calling_code
-                    command.CommandText = "delete from calling_code";
+                    command.CommandText = "delete from calling_codes";
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table top_level_domain
-                    command.CommandText = "delete from top_level_domain";
+                    command.CommandText = "delete from top_level_domains";
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table country
-                    command.CommandText = "delete from country";
+                    command.CommandText = "delete from countries";
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table other_name
-                    command.CommandText = "delete from other_name";
+                    command.CommandText = "delete from other_names";
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table other_acronym
-                    command.CommandText = "delete from other_acronym";
+                    command.CommandText = "delete from other_acronyms";
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table regional_bloc
-                    command.CommandText = "delete from regional_bloc";
+                    command.CommandText = "delete from regional_blocs";
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table currency
-                    command.CommandText = "delete from currency";
+                    command.CommandText = "delete from currencies";
                     command.ExecuteNonQueryAsync();
 
                     //Delete data from table language
-                    command.CommandText = "delete from language";
+                    command.CommandText = "delete from languages";
                     command.ExecuteNonQueryAsync();
                 }
                 catch (Exception e)
@@ -289,14 +289,14 @@
         /// <summary>
         /// Insert the data into the database
         /// </summary>
-        /// <param name="command">Sqlite command</param>
         /// <param name="Countries">List of countries</param>
         /// <param name="Languages">List of distinct languages</param>
         /// <param name="Currencies">List of distinct currencies</param>
         /// <param name="RegionalBlocs">List of distinct regional blocs</param>
         /// <param name="progress">Progress report</param>
+        /// <param name="connection">Sqlconnection</param>
         /// <returns>Returns a task</returns>
-        private static async Task InsertData(SQLiteCommand command, List<Country> Countries, List<Language> Languages, List<Currency> Currencies, List<RegionalBloc> RegionalBlocs, IProgress<ProgressReport> progress)
+        private static async Task InsertData(List<Country> Countries, List<Language> Languages, List<Currency> Currencies, List<RegionalBloc> RegionalBlocs, IProgress<ProgressReport> progress, SQLiteConnection connection)
         {
             ProgressReport report = new ProgressReport();
             int count = 0;
@@ -305,137 +305,168 @@
             {
                 try
                 {
-                    foreach (var regionalBloc in RegionalBlocs)
+                    using (SQLiteCommand command = new SQLiteCommand(connection))
                     {
-                        //Fill table regional_bloc with data
-                        command.CommandText = $"insert into regional_bloc values('{regionalBloc.Acronym}','{regionalBloc.Name}')";
-                        command.ExecuteNonQueryAsync();
-
-                        //Fill table other_acronym with data
-                        foreach (var otherAcronym in regionalBloc.OtherAcronyms)
+                        foreach (var regionalBloc in RegionalBlocs)
                         {
-                            command.CommandText = $"insert into other_acronym(other_acronyms,acronym_regional_bloc) values('{otherAcronym}','{regionalBloc.Acronym}')";
+                            //Fill table regional_bloc with data
+                            command.CommandText = $"insert into regional_blocs values('{regionalBloc.Acronym}','{regionalBloc.Name}')";
+                            command.ExecuteNonQueryAsync();
+
+                            //Fill table other_acronym with data
+                            foreach (var otherAcronym in regionalBloc.OtherAcronyms)
+                            {
+                                command.CommandText = $"insert into other_acronyms(other_acronyms,acronym_regional_bloc) values('{otherAcronym}','{regionalBloc.Acronym}')";
+                                command.ExecuteNonQueryAsync();
+                            }
+
+                            //Fill table other_name with data
+                            foreach (var otherName in regionalBloc.OtherNames)
+                            {
+                                command.CommandText = $"insert into other_names(other_names,acronym_regional_bloc) values('{otherName}','{regionalBloc.Acronym}')";
+                                command.ExecuteNonQueryAsync();
+                            }
+                        }
+
+                        progress.Report(report);
+
+                        //Fill table language with data
+                        foreach (var language in Languages)
+                        {
+                            command.CommandText = $"insert into languages values('{language.Iso639_1}','{language.Iso639_2}','{language.Name}','{language.NativeName.Replace("'", "´")}')";
                             command.ExecuteNonQueryAsync();
                         }
 
-                        //Fill table other_name with data
-                        foreach (var otherName in regionalBloc.OtherNames)
-                        {
-                            command.CommandText = $"insert into other_name(other_names,acronym_regional_bloc) values('{otherName}','{regionalBloc.Acronym}')";
-                            command.ExecuteNonQueryAsync();
-                        }
-                    }
-
-                    progress.Report(report);
-
-                    //Fill table language with data
-                    foreach (var language in Languages)
-                    {
-                        command.CommandText = $"insert into language values('{language.Iso639_1}','{language.Iso639_2}','{language.Name}','{language.NativeName.Replace("'", "´")}')";
-                        command.ExecuteNonQueryAsync();
-                    }
-
-                    count += 3;
-                    report.PercentageComplete = (count * 100) / 256;
-                    progress.Report(report);
-
-                    //Fill table currency with data
-                    foreach (var currency in Currencies)
-                    {
-                        command.CommandText = $"insert into currency values('{currency.Code}','{currency.Name.Replace("'", "´")}','{currency.Symbol}')";
-                        command.ExecuteNonQueryAsync();
-                    }
-
-                    count += 3;
-                    report.PercentageComplete = (count * 100) / 256;
-                    progress.Report(report);
-
-                    foreach (var country in Countries)
-                    {
-                        //Fill table country with data
-                        command.CommandText = $"insert into country values('{country.Alpha3Code}','{country.Name.Replace("'", "´")}','{country.Alpha2Code}','{country.Capital.Replace("'", "´")}','{country.Region}','{country.Subregion}',{country.Population},'{country.Demonym}','{country.Area}','{country.Gini}','{country.NativeName.Replace("'", "´")}','{country.NumericCode}','{country.Flag}','{country.Cioc}')";
-                        command.ExecuteNonQueryAsync();
-
-                        //Fill table top_level_domain with data
-                        foreach (var topLevelDomain in country.TopLevelDomain)
-                        {
-                            command.CommandText = $"insert into top_level_domain(top_level_domain,country_alpha3code) values('{topLevelDomain}','{country.Alpha3Code}')";
-                            command.ExecuteNonQueryAsync();
-                        }
-
-                        //Fill table calling_code with data
-                        foreach (var callingCode in country.CallingCodes)
-                        {
-                            command.CommandText = $"insert into calling_code(calling_codes,country_alpha3code) values('{callingCode}','{country.Alpha3Code}')";
-                            command.ExecuteNonQueryAsync();
-                        }
-
-                        //Fill table alt_spelling with data
-                        foreach (var altSpelling in country.AltSpellings)
-                        {
-                            command.CommandText = $"insert into alt_spelling(alt_spellings,country_alpha3code) values('{altSpelling.Replace("'", "´")}','{country.Alpha3Code}')";
-                            command.ExecuteNonQueryAsync();
-                        }
-
-                        //Fill table lat_lng with data
-                        if (country.Latlng.Count > 0)
-                        {
-                            command.CommandText = $"insert into lat_lng values('{country.Alpha3Code}','{country.Latlng[0]}','{country.Latlng[1]}')";
-                            command.ExecuteNonQueryAsync();
-                        }
-
-                        //Fill table translation with data
-                        if (country.Translations.It == null)
-                        {
-                            country.Translations.It = string.Empty;
-                        }
-
-                        if (country.Translations.Fr == null)
-                        {
-                            country.Translations.Fr = string.Empty;
-                        }
-
-                        command.CommandText = $"insert into translation values('{country.Alpha3Code}','{country.Translations.De}','{country.Translations.Es}','{country.Translations.Fr.Replace("'", "´")}','{country.Translations.Ja}','{country.Translations.It.Replace("'", "´")}','{country.Translations.Br}','{country.Translations.Pt}','{country.Translations.Nl}','{country.Translations.Hr}','{country.Translations.Fa}')";
-                        command.ExecuteNonQueryAsync();
-
-                        //Fill table country_border with data
-                        foreach (var border in country.Borders)
-                        {
-                            command.CommandText = $"insert into country_border values('{country.Alpha3Code}','{border}')";
-                            command.ExecuteNonQueryAsync();
-                        }
-
-                        //Fill table country_timezone with data
-                        foreach (var timeZone in country.Timezones)
-                        {
-                            command.CommandText = $"insert into country_timezone values('{country.Alpha3Code}','{timeZone}')";
-                            command.ExecuteNonQueryAsync();
-                        }
-
-                        //Fill table country_language with data
-                        foreach (var language in country.Languages)
-                        {
-                            command.CommandText = $"insert into country_language values('{country.Alpha3Code}','{language.Iso639_1}')";
-                            command.ExecuteNonQueryAsync();
-                        }
-
-                        //Fill table country_currency with data
-                        foreach (var currency in country.Currencies)
-                        {
-                            command.CommandText = $"insert into country_currency values('{country.Alpha3Code}','{currency.Code}')";
-                            command.ExecuteNonQueryAsync();
-                        }
-
-                        //Fill table country_regional_bloc with data
-                        foreach (var regionalBloc in country.RegionalBlocs)
-                        {
-                            command.CommandText = $"insert into country_regional_bloc values('{country.Alpha3Code}','{regionalBloc.Acronym}')";
-                            command.ExecuteNonQueryAsync();
-                        }
-
-                        count++;
+                        count += 3;
                         report.PercentageComplete = (count * 100) / 256;
                         progress.Report(report);
+
+                        //Fill table currency with data
+                        foreach (var currency in Currencies)
+                        {
+                            if (currency.Name == null)
+                            {
+                                command.CommandText = $"insert into currencies(code, name, symbol) values('{currency.Code}','{currency.Name}','{currency.Symbol}')";
+                                command.ExecuteNonQueryAsync();
+                            }
+                            else
+                            {
+                                command.CommandText = $"insert into currencies(code, name, symbol) values('{currency.Code}','{currency.Name.Replace("'", "´")}','{currency.Symbol}')";
+                                command.ExecuteNonQueryAsync();
+                            }
+                        }
+
+                        count += 3;
+                        report.PercentageComplete = (count * 100) / 256;
+                        progress.Report(report);
+
+                        foreach (var country in Countries)
+                        {
+                            //Fill table country with data
+                            command.CommandText = $"insert into countries values('{country.Alpha3Code}','{country.Name.Replace("'", "´")}','{country.Alpha2Code}','{country.Capital.Replace("'", "´")}','{country.Region}','{country.Subregion}',{country.Population},'{country.Demonym}','{country.Area}','{country.Gini}','{country.NativeName.Replace("'", "´")}','{country.NumericCode}','{country.Flag}','{country.Cioc}')";
+                            command.ExecuteNonQueryAsync();
+
+                            //Fill table top_level_domain with data
+                            foreach (var topLevelDomain in country.TopLevelDomain)
+                            {
+                                command.CommandText = $"insert into top_level_domains(top_level_domain,country_alpha3code) values('{topLevelDomain}','{country.Alpha3Code}')";
+                                command.ExecuteNonQueryAsync();
+                            }
+
+                            //Fill table calling_code with data
+                            foreach (var callingCode in country.CallingCodes)
+                            {
+                                command.CommandText = $"insert into calling_codes(calling_codes,country_alpha3code) values('{callingCode}','{country.Alpha3Code}')";
+                                command.ExecuteNonQueryAsync();
+                            }
+
+                            //Fill table alt_spelling with data
+                            foreach (var altSpelling in country.AltSpellings)
+                            {
+                                command.CommandText = $"insert into alt_spellings(alt_spellings,country_alpha3code) values('{altSpelling.Replace("'", "´")}','{country.Alpha3Code}')";
+                                command.ExecuteNonQueryAsync();
+                            }
+
+                            //Fill table lat_lng with data
+                            if (country.Latlng.Count > 0)
+                            {
+                                command.CommandText = $"insert into lat_lng values('{country.Alpha3Code}','{country.Latlng[0]}','{country.Latlng[1]}')";
+                                command.ExecuteNonQueryAsync();
+                            }
+
+                            //Fill table translation with data
+                            if (country.Translations.It == null)
+                            {
+                                country.Translations.It = string.Empty;
+                            }
+
+                            if (country.Translations.Fr == null)
+                            {
+                                country.Translations.Fr = string.Empty;
+                            }
+
+                            command.CommandText = $"insert into translations values('{country.Alpha3Code}','{country.Translations.De}','{country.Translations.Es}','{country.Translations.Fr.Replace("'", "´")}','{country.Translations.Ja}','{country.Translations.It.Replace("'", "´")}','{country.Translations.Br}','{country.Translations.Pt}','{country.Translations.Nl}','{country.Translations.Hr}','{country.Translations.Fa}')";
+                            command.ExecuteNonQueryAsync();
+
+                            //Fill table country_border with data
+                            foreach (var border in country.Borders)
+                            {
+                                command.CommandText = $"insert into country_borders values('{country.Alpha3Code}','{border}')";
+                                command.ExecuteNonQueryAsync();
+                            }
+
+                            //Fill table country_timezone with data
+                            foreach (var timeZone in country.Timezones)
+                            {
+                                command.CommandText = $"insert into country_timezones values('{country.Alpha3Code}','{timeZone}')";
+                                command.ExecuteNonQueryAsync();
+                            }
+
+                            //Fill table country_language with data
+                            foreach (var language in country.Languages)
+                            {
+                                command.CommandText = $"insert into country_languages values('{country.Alpha3Code}','{language.Iso639_1}')";
+                                command.ExecuteNonQueryAsync();
+                            }
+
+                            //Fill table country_currency with data
+                            foreach (var currency in country.Currencies)
+                            {
+                                if (currency.Name == null)
+                                {
+                                    command.CommandText = $"select id from currencies where code='{currency.Code}' and name='{currency.Name}' and symbol='{currency.Symbol}'";
+                                }
+                                else
+                                {
+                                    command.CommandText = $"select id from currencies where code='{currency.Code}' and name='{currency.Name.Replace("'", "´")}' and symbol='{currency.Symbol}'";
+                                }
+
+                                using (SQLiteDataReader readerCurrency = command.ExecuteReader())
+                                {
+                                    while (readerCurrency.Read())
+                                    {
+                                        using (SQLiteCommand command2 = new SQLiteCommand(connection))
+                                        {
+                                            int id = Convert.ToInt32(readerCurrency["id"]);
+
+                                            command2.CommandText = $"insert into country_currencies values('{country.Alpha3Code}','{id}')";
+                                            command2.ExecuteNonQueryAsync();
+                                        }
+                                    }
+                                }
+                            }
+
+                            //Fill table country_regional_bloc with data
+                            foreach (var regionalBloc in country.RegionalBlocs)
+                            {
+                                command.CommandText = $"insert into country_regional_blocs values('{country.Alpha3Code}','{regionalBloc.Acronym}')";
+                                command.ExecuteNonQueryAsync();
+                            }
+
+                            count++;
+                            report.PercentageComplete = (count * 100) / 256;
+                            progress.Report(report);
+                        }
                     }
                 }
                 catch (Exception e)
@@ -494,7 +525,7 @@
                     using (SQLiteCommand command1 = new SQLiteCommand(connection))
                     {
                         //Get data from the table country
-                        command1.CommandText = "select alpha3code, name, alpha2code, capital, region, subregion, population, demonym, area, gini, native_name, numeric_code, flag, cioc from country";
+                        command1.CommandText = "select alpha3code, name, alpha2code, capital, region, subregion, population, demonym, area, gini, native_name, numeric_code, flag, cioc from countries";
 
                         using (SQLiteDataReader readerCountry = command1.ExecuteReader())
                         {
@@ -525,7 +556,7 @@
                                 using (SQLiteCommand command2 = new SQLiteCommand(connection))
                                 {
                                     //Get data from the table top_level_domain
-                                    command2.CommandText = $"select top_level_domain from top_level_domain where country_alpha3code='{country.Alpha3Code}'";
+                                    command2.CommandText = $"select top_level_domain from top_level_domains where country_alpha3code='{country.Alpha3Code}'";
 
                                     using (SQLiteDataReader readerTopLevelDomain = command2.ExecuteReader())
                                     {
@@ -543,7 +574,7 @@
 
 
                                     //Get data from the table calling_code
-                                    command2.CommandText = $"select calling_codes from calling_code where country_alpha3code='{country.Alpha3Code}'";
+                                    command2.CommandText = $"select calling_codes from calling_codes where country_alpha3code='{country.Alpha3Code}'";
 
                                     using (SQLiteDataReader readerCallingCodes = command2.ExecuteReader())
                                     {
@@ -560,7 +591,7 @@
                                     }
 
                                     //Get data from the table alt_spelling
-                                    command2.CommandText = $"select alt_spellings from alt_spelling where country_alpha3code='{country.Alpha3Code}'";
+                                    command2.CommandText = $"select alt_spellings from alt_spellings where country_alpha3code='{country.Alpha3Code}'";
 
                                     using (SQLiteDataReader readerAltSpellings = command2.ExecuteReader())
                                     {
@@ -598,7 +629,7 @@
                                     }
 
                                     //Get data from the table country_timezone
-                                    command2.CommandText = $"select timezones from country_timezone where country_alpha3code='{country.Alpha3Code}'";
+                                    command2.CommandText = $"select timezones from country_timezones where country_alpha3code='{country.Alpha3Code}'";
 
                                     using (SQLiteDataReader readerTimezone = command2.ExecuteReader())
                                     {
@@ -615,7 +646,7 @@
                                     }
 
                                     //Get data from the table country_border
-                                    command2.CommandText = $"select borders from country_border where country_alpha3code='{country.Alpha3Code}'";
+                                    command2.CommandText = $"select borders from country_borders where country_alpha3code='{country.Alpha3Code}'";
 
                                     using (SQLiteDataReader readerBorder = command2.ExecuteReader())
                                     {
@@ -632,7 +663,7 @@
                                     }
 
                                     //Get data from the table translation
-                                    command2.CommandText = $"select de, es, fr, ja, it, br, pt, nl, hr, fa from translation where country_alpha3code='{country.Alpha3Code}'";
+                                    command2.CommandText = $"select de, es, fr, ja, it, br, pt, nl, hr, fa from translations where country_alpha3code='{country.Alpha3Code}'";
 
                                     using (SQLiteDataReader readerTranslation = command2.ExecuteReader())
                                     {
@@ -669,7 +700,7 @@
                                     }
 
                                     //Get data from the tables country_currency and currency
-                                    command2.CommandText = $"select code_currency, name, symbol from currency inner join country_currency on code=code_currency where country_alpha3code='{country.Alpha3Code}'";
+                                    command2.CommandText = $"select code, name, symbol from currencies inner join country_currencies on id=id_currency where country_alpha3code='{country.Alpha3Code}'";
 
                                     using (SQLiteDataReader readerCurrency = command2.ExecuteReader())
                                     {
@@ -679,7 +710,7 @@
                                         {
                                             Currency currency = new Currency
                                             {
-                                                Code = (string)readerCurrency["code_currency"],
+                                                Code = (string)readerCurrency["code"],
                                                 Name = (string)readerCurrency["name"],
                                                 Symbol = (string)readerCurrency["symbol"]
                                             };
@@ -693,7 +724,7 @@
                                     }
 
                                     //Get data from the tables language and country_language
-                                    command2.CommandText = $"select iso639_1_language, iso639_2, name, native_name from language inner join country_language on iso639_1=iso639_1_language where country_alpha3code='{country.Alpha3Code}'";
+                                    command2.CommandText = $"select iso639_1_language, iso639_2, name, native_name from languages inner join country_languages on iso639_1=iso639_1_language where country_alpha3code='{country.Alpha3Code}'";
 
                                     using (SQLiteDataReader readerLanguage = command2.ExecuteReader())
                                     {
@@ -718,7 +749,7 @@
                                     }
 
                                     //Get data from the tables regional_bloc and country_regional_bloc
-                                    command2.CommandText = $"select acronym_regional_bloc, name from regional_bloc inner join country_regional_bloc on acronym=acronym_regional_bloc where country_alpha3code='{country.Alpha3Code}'";
+                                    command2.CommandText = $"select acronym_regional_bloc, name from regional_blocs inner join country_regional_blocs on acronym=acronym_regional_bloc where country_alpha3code='{country.Alpha3Code}'";
 
                                     using (SQLiteDataReader readerRegionalBloc = command2.ExecuteReader())
                                     {
@@ -735,7 +766,7 @@
                                             using (SQLiteCommand command3 = new SQLiteCommand(connection))
                                             {
                                                 //Get data from the table other_acronym
-                                                command3.CommandText = $"select other_acronyms from other_acronym inner join regional_bloc on acronym=acronym_regional_bloc where acronym_regional_bloc='{regionalBloc.Acronym}'";
+                                                command3.CommandText = $"select other_acronyms from other_acronyms inner join regional_blocs on acronym=acronym_regional_bloc where acronym_regional_bloc='{regionalBloc.Acronym}'";
 
                                                 using (SQLiteDataReader readerOtherAcronym = command3.ExecuteReader())
                                                 {
@@ -752,7 +783,7 @@
                                                 }
 
                                                 //Get data from the table other_name 
-                                                command3.CommandText = $"select other_names from other_name inner join regional_bloc on acronym=acronym_regional_bloc where acronym_regional_bloc='{regionalBloc.Acronym}'";
+                                                command3.CommandText = $"select other_names from other_names inner join regional_blocs on acronym=acronym_regional_bloc where acronym_regional_bloc='{regionalBloc.Acronym}'";
 
                                                 using (SQLiteDataReader readerOtherName = command3.ExecuteReader())
                                                 {

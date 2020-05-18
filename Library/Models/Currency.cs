@@ -26,7 +26,10 @@ namespace Library.Models
                     return false;
                 }
 
-                return currency.Code == this.Code;
+                if (currency.Code == this.Code && currency.Name == this.Name && currency.Symbol == this.Symbol)
+                {
+                    return true;
+                }
             }
 
             return false;

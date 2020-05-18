@@ -7,18 +7,12 @@
     using System.Windows.Controls;
     using System.IO;
     using System.Windows.Media;
+    using System.Windows.Media.Imaging;
     using Library.Services;
     using Library.Models;
     using SharpVectors.Renderers.Wpf;
     using SharpVectors.Converters;
-    using System.Collections.ObjectModel;
-    using System.Collections.Specialized;
-    using System.Linq;
-    using System.Windows.Documents;
-    using System.Collections;
-    using System.Data.Entity;
-    using System.Windows.Data;
-    using System.Windows.Media.Imaging;
+    using System.Globalization;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -34,7 +28,7 @@
         public MainWindow()
         {
             InitializeComponent();
-
+            sPCountries.Visibility = Visibility.Hidden;
             Countries = new List<Country>();
             LoadData();
         }
@@ -100,6 +94,43 @@
             }
 
             Countries = (List<Country>)response.Result;
+
+            FixCurrencies();
+        }
+
+        /// <summary>
+        /// Fix issues with currencies
+        /// </summary>
+        private void FixCurrencies()
+        {
+            Countries[34].Currencies.RemoveAt(0);
+            Countries[145].Currencies.RemoveAt(0);
+            Countries[155].Currencies.RemoveAt(1);
+            Countries[170].Currencies.RemoveAt(0);
+            Countries[209].Currencies.RemoveAt(1);
+            Countries[225].Currencies.RemoveAt(1);
+            Countries[249].Currencies.RemoveAt(8);
+
+            foreach (var country in Countries)
+            {
+                foreach (var currency in country.Currencies)
+                {
+                    if (currency.Code == "USD")
+                    {
+                        currency.Name = "United States Dollar";
+                    }
+
+                    if (currency.Code == "ZAR")
+                    {
+                        currency.Symbol = "R";
+                    }
+
+                    if (currency.Code == "ILS")
+                    {
+                        currency.Name = "Israeli new shekel";
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -142,7 +173,7 @@
         }
 
         /// <summary>
-        /// Show data
+        /// Show data of the selected country
         /// </summary>
         private void ShowData()
         {
@@ -151,70 +182,6 @@
             sPCountries.DataContext = Countries[country];
             lblCountryName.Content = Countries[country].Name;
             ShowFlag(country);
-
-            if (Countries[country].Borders.Count > 1)
-            {
-                txbBorders.Text = "Borders: ";
-            }
-            else
-            {
-                txbBorders.Text = "Border: ";
-            }
-
-            if (Countries[country].CallingCodes.Count > 1)
-            {
-                txbCallingCodes.Text = "Calling codes: ";
-            }
-            else
-            {
-                txbCallingCodes.Text = "Calling code: ";
-            }
-
-            if (Countries[country].RegionalBlocs.Count > 1)
-            {
-                txbRegionalBlocs.Text = "Regional blocs: ";
-            }
-            else
-            {
-                txbRegionalBlocs.Text = "Regional bloc: ";
-            }
-
-            if (Countries[country].Languages.Count > 1)
-            {
-                lblLanguages.Content = "Languages";
-            }
-            else
-            {
-                lblLanguages.Content = "Language";
-            }
-
-            if (Countries[country].Currencies.Count > 1)
-            {
-                lblCurrencies.Content = "Currencies";
-            }
-            else
-            {
-                lblCurrencies.Content = "Currency";
-            }
-
-            if (Countries[country].Timezones.Count > 1)
-            {
-                txbTimezones.Text = "Timezones: ";
-            }
-            else
-            {
-                txbTimezones.Text = "Timezone: ";
-            }
-
-            if (Countries[country].AltSpellings.Count > 1)
-            {
-                txbAltSpellings.Text = "Alternative spellings";
-            }
-            else
-            {
-                txbAltSpellings.Text = "Alternative spelling";
-            }
-
             sPCountries.Visibility = Visibility.Visible;
         }
 
@@ -241,6 +208,7 @@
                 else
                 {
                     DialogService.ShowMessageBox("Error", $"The flag of {Countries[country].Name} wasn´t found. Please restart the app.");
+                    flagImage.Source = new BitmapImage(new Uri(Environment.CurrentDirectory + @"\NotFound\" + "NotFound.jpg", UriKind.Absolute));
                 }
             }
             catch
@@ -249,11 +217,13 @@
                 {
                     flagImage.Source = null;
                     DialogService.ShowMessageBox("Error", $"The flag of {Countries[country].Name} wasn´t found. Please restart the app.");
+                    flagImage.Source = new BitmapImage(new Uri(Environment.CurrentDirectory + @"\NotFound\" + "NotFound.jpg", UriKind.Absolute));
                 }
                 else
                 {
                     flagImage.Source = null;
                     DialogService.ShowMessageBox("Error", $"The flag of {Countries[country].Name} wasn´t found." + Environment.NewLine + "Please restart the app with internet connection.");
+                    flagImage.Source = new BitmapImage(new Uri(Environment.CurrentDirectory + @"\NotFound\" + "NotFound.jpg", UriKind.Absolute));
                 }
             }
         }
@@ -275,9 +245,7 @@
             {
                 if (text == country.Alpha3Code)
                 {
-                    text = country.Name;
-
-                    (sender as TextBlock).Text = text;
+                    (sender as TextBlock).Text = country.Name;
                     return;
                 }
             }
