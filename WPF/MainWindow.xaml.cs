@@ -8,11 +8,12 @@
     using System.IO;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
+    using System.Windows.Documents;
+    using System.Windows.Threading;
     using Library.Services;
     using Library.Models;
     using SharpVectors.Renderers.Wpf;
     using SharpVectors.Converters;
-    using System.Globalization;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -24,6 +25,11 @@
         public bool Load { get; set; }
         //== true -> internet connection, data retrieved from api
         //== false -> no internet connection, data retrieved from local database
+
+        public DispatcherTimer Timer { get; set; }
+
+        public List<string> Clocks { get; set; }
+        //List with the current date/time of the timezones of the selected country
 
         public MainWindow()
         {
@@ -42,6 +48,8 @@
 
             if (connection.IsSuccess == true)
             {
+                txbStatus.Text = "Retrieving data from api...";
+
                 await LoadApiData();
                 await CountryFlagService.DownloadFlags(Countries);
                 Load = true;
@@ -52,6 +60,7 @@
                 Load = false;
             }
 
+            CreateTimer();
             cbCountries.ItemsSource = Countries;
 
             if (Load == true)
@@ -132,6 +141,61 @@
                 }
             }
         }
+        /// <summary>
+        /// Create DispatcherTimer
+        /// </summary>
+        private void CreateTimer()
+        {
+            Timer = new DispatcherTimer
+            {
+                Interval = new TimeSpan(0, 0, 0, 0, 1)
+            };
+
+            Timer.Tick += Timer_Tick;
+            Timer.Start();
+        }
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            if (Countries != null)
+            {
+                if (cbCountries.SelectedIndex != -1)
+                {
+                    if (Clocks.Count == Countries[cbCountries.SelectedIndex].Timezones.Count)
+                    {
+                        for (int i = 0, j = 0; i < Clocks.Count; i++, j++)
+                        {
+                            if (Countries[cbCountries.SelectedIndex].Timezones[j] == "UTC")
+                            {
+                                Clocks[i] = DateTime.UtcNow.ToString();
+                            }
+                            else
+                            {
+                                if (Countries[cbCountries.SelectedIndex].Timezones[j] == "UTC+04")
+                                {
+                                    Clocks[i] = DateTime.UtcNow.AddHours(4).ToString();
+                                }
+                                else if (Countries[cbCountries.SelectedIndex].Timezones[j] == "UTC+11")
+                                {
+                                    Clocks[i] = DateTime.UtcNow.AddHours(11).ToString();
+                                }
+                                else if (Countries[cbCountries.SelectedIndex].Timezones[j][3] == '+')
+                                {
+                                    Clocks[i] = DateTime.UtcNow.Add(TimeSpan.Parse(Countries[cbCountries.SelectedIndex].Timezones[j].Replace("UTC+", string.Empty))).ToString();
+                                }
+                                else
+                                {
+                                    Clocks[i] = DateTime.UtcNow.Subtract(TimeSpan.Parse(Countries[cbCountries.SelectedIndex].Timezones[j].Replace("UTC-", string.Empty))).ToString();
+                                }
+                            }
+                        }
+
+                        icClock.ItemsSource = null;
+                        icClock.ItemsSource = Clocks;
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Get the data from the database
@@ -178,10 +242,10 @@
         private void ShowData()
         {
             int country = cbCountries.SelectedIndex;
-
             sPCountries.DataContext = Countries[country];
             lblCountryName.Content = Countries[country].Name;
             ShowFlag(country);
+            InitClocks(Countries[country].Timezones.Count);
             sPCountries.Visibility = Visibility.Visible;
         }
 
@@ -248,6 +312,34 @@
                     (sender as TextBlock).Text = country.Name;
                     return;
                 }
+            }
+        }
+
+        private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+        {
+            var text = (sender as Hyperlink).DataContext;
+
+            for (int i = 0; i < Countries.Count; i++)
+            {
+                if (text.ToString() == Countries[i].Alpha3Code)
+                {
+                    cbCountries.SelectedIndex = i;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Create the list Clocks with the number of items equal to the number of timezones of the selected country
+        /// </summary>
+        /// <param name="timezonesCount">Number of timezones of the selected country</param>
+        private void InitClocks(int timezonesCount)
+        {
+            Clocks = new List<string>();
+            string clock = string.Empty;
+
+            for (int i = 0; i < timezonesCount; i++)
+            {
+                Clocks.Add(clock);
             }
         }
     }
