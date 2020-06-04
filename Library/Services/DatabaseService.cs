@@ -28,7 +28,7 @@
                 Directory.CreateDirectory("DB");
             }
 
-            var path = @"DB\countries.sqlite";
+            var path = Path.Combine(Environment.CurrentDirectory, @"DB\countries.sqlite");
 
             using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + path))
             {
@@ -490,7 +490,7 @@
                 Directory.CreateDirectory("DB");
             }
 
-            var path = @"DB\countries.sqlite";
+            var path = Path.Combine(Environment.CurrentDirectory, @"DB\countries.sqlite");
 
             using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + path))
             {

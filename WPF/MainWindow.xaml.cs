@@ -2,18 +2,19 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
     using System.Threading.Tasks;
     using System.Windows;
     using System.Windows.Controls;
-    using System.IO;
+    using System.Windows.Documents;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
-    using System.Windows.Documents;
     using System.Windows.Threading;
-    using Library.Services;
     using Library.Models;
-    using SharpVectors.Renderers.Wpf;
+    using Library.Services;
     using SharpVectors.Converters;
+    using SharpVectors.Renderers.Wpf;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -34,7 +35,6 @@
         public MainWindow()
         {
             InitializeComponent();
-            sPCountries.Visibility = Visibility.Hidden;
             Countries = new List<Country>();
             LoadData();
         }
@@ -58,6 +58,7 @@
             {
                 await LoadLocalData();
                 Load = false;
+                btnMaps.Visibility = Visibility.Hidden;
             }
 
             CreateTimer();
@@ -141,6 +142,7 @@
                 }
             }
         }
+
         /// <summary>
         /// Create DispatcherTimer
         /// </summary>
@@ -161,37 +163,40 @@
             {
                 if (cbCountries.SelectedIndex != -1)
                 {
-                    if (Clocks.Count == Countries[cbCountries.SelectedIndex].Timezones.Count)
+                    if (Clocks != null)
                     {
-                        for (int i = 0, j = 0; i < Clocks.Count; i++, j++)
+                        if (Clocks.Count == Countries[cbCountries.SelectedIndex].Timezones.Count)
                         {
-                            if (Countries[cbCountries.SelectedIndex].Timezones[j] == "UTC")
+                            for (int i = 0, j = 0; i < Clocks.Count; i++, j++)
                             {
-                                Clocks[i] = DateTime.UtcNow.ToString();
-                            }
-                            else
-                            {
-                                if (Countries[cbCountries.SelectedIndex].Timezones[j] == "UTC+04")
+                                if (Countries[cbCountries.SelectedIndex].Timezones[j] == "UTC")
                                 {
-                                    Clocks[i] = DateTime.UtcNow.AddHours(4).ToString();
-                                }
-                                else if (Countries[cbCountries.SelectedIndex].Timezones[j] == "UTC+11")
-                                {
-                                    Clocks[i] = DateTime.UtcNow.AddHours(11).ToString();
-                                }
-                                else if (Countries[cbCountries.SelectedIndex].Timezones[j][3] == '+')
-                                {
-                                    Clocks[i] = DateTime.UtcNow.Add(TimeSpan.Parse(Countries[cbCountries.SelectedIndex].Timezones[j].Replace("UTC+", string.Empty))).ToString();
+                                    Clocks[i] = DateTime.UtcNow.ToString();
                                 }
                                 else
                                 {
-                                    Clocks[i] = DateTime.UtcNow.Subtract(TimeSpan.Parse(Countries[cbCountries.SelectedIndex].Timezones[j].Replace("UTC-", string.Empty))).ToString();
+                                    if (Countries[cbCountries.SelectedIndex].Timezones[j] == "UTC+04")
+                                    {
+                                        Clocks[i] = DateTime.UtcNow.AddHours(4).ToString();
+                                    }
+                                    else if (Countries[cbCountries.SelectedIndex].Timezones[j] == "UTC+11")
+                                    {
+                                        Clocks[i] = DateTime.UtcNow.AddHours(11).ToString();
+                                    }
+                                    else if (Countries[cbCountries.SelectedIndex].Timezones[j][3] == '+')
+                                    {
+                                        Clocks[i] = DateTime.UtcNow.Add(TimeSpan.Parse(Countries[cbCountries.SelectedIndex].Timezones[j].Replace("UTC+", string.Empty))).ToString();
+                                    }
+                                    else
+                                    {
+                                        Clocks[i] = DateTime.UtcNow.Subtract(TimeSpan.Parse(Countries[cbCountries.SelectedIndex].Timezones[j].Replace("UTC-", string.Empty))).ToString();
+                                    }
                                 }
                             }
-                        }
 
-                        icClock.ItemsSource = null;
-                        icClock.ItemsSource = Clocks;
+                            icClock.ItemsSource = null;
+                            icClock.ItemsSource = Clocks;
+                        }
                     }
                 }
             }
@@ -242,11 +247,10 @@
         private void ShowData()
         {
             int country = cbCountries.SelectedIndex;
+
             sPCountries.DataContext = Countries[country];
-            lblCountryName.Content = Countries[country].Name;
             ShowFlag(country);
             InitClocks(Countries[country].Timezones.Count);
-            sPCountries.Visibility = Visibility.Visible;
         }
 
         /// <summary>
@@ -340,6 +344,81 @@
             for (int i = 0; i < timezonesCount; i++)
             {
                 Clocks.Add(clock);
+            }
+        }
+
+        private void btnAbout_Click(object sender, RoutedEventArgs e)
+        {
+            DialogService.ShowMessageBox("About", "Developed by André Martins" + Environment.NewLine + "Version 1.0" + Environment.NewLine + "Date: 02/06/2020");
+        }
+
+        private void btnHelp_Click(object sender, RoutedEventArgs e)
+        {
+            DialogService.ShowMessageBox("Help", "- Hover your cursor over a word in bold to know the meaning of it." + Environment.NewLine + Environment.NewLine + "Example: Hover your cursor over the demonym to find out what it is." + Environment.NewLine + Environment.NewLine + "- Hover you mouse over the regional bloc acronym or currency code to find out the name of the regional bloc/currency." + Environment.NewLine + Environment.NewLine + "- Tip: Check the name of a country in border(s).");
+        }
+
+        private void btnMaps_Click(object sender, RoutedEventArgs e)
+        {
+            var answer = DialogService.ShowMessageBox("Maps", "You are being redirected to Google Maps." + Environment.NewLine + "Do you want to proceed?");
+
+            if (answer == MessageBoxResult.Yes)
+            {
+                OpenMaps();
+            }
+        }
+
+        /// <summary>
+        /// Open Google Maps in the latitude and longitude of the selected country
+        /// </summary>
+        public void OpenMaps()
+        {
+            int country = cbCountries.SelectedIndex;
+            string lat = Countries[country].Latlng[0].ToString().Replace(',', '.');
+            string lng = Countries[country].Latlng[1].ToString().Replace(',', '.');
+            string alt;
+
+            if (Countries[country].Area < 30)
+            {
+                alt = "14z";
+            }
+            else if (Countries[country].Area < 100)
+            {
+                alt = "12z";
+            }
+            else if (Countries[country].Area < 500)
+            {
+                alt = "10z";
+            }
+            else if (Countries[country].Area < 5000)
+            {
+                alt = "8z";
+            }
+            else if (Countries[country].Area < 200000)
+            {
+                alt = "6z";
+            }
+            else if (Countries[country].Area < 2000000)
+            {
+                alt = "5z";
+            }
+            else if (Countries[country].Area < 10000000)
+            {
+                alt = "4z";
+            }
+            else
+            {
+                alt = "3z";
+            }
+
+            string link = $"https://www.google.pt/maps/place/{lat},{lng}/@{lat},{lng},{alt}";
+
+            try
+            {
+                Process.Start(link);
+            }
+            catch (Exception ex)
+            {
+                DialogService.ShowMessageBox("Error", ex.Message);
             }
         }
     }

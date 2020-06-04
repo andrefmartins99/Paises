@@ -1,7 +1,7 @@
-﻿using System.Windows.Data;
-
-namespace Library.Models
+﻿namespace Library.Models
 {
+    using System.Windows.Data;
+
     public class Currency
     {
         public string Code { get; set; }

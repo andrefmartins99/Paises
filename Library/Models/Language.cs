@@ -1,7 +1,7 @@
-﻿using System.Windows.Data;
-
-namespace Library.Models
+﻿namespace Library.Models
 {
+    using System.Windows.Data;
+
     public class Language
     {
         public string Iso639_1 { get; set; }

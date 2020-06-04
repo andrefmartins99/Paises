@@ -16,27 +16,34 @@
         /// <returns>Returns a task</returns>
         public static async Task DownloadFlags(List<Country> Countries)
         {
-            if (!Directory.Exists("Flags"))
+            try
             {
-                Directory.CreateDirectory("Flags");
-            }
-
-            List<string> Flags = new List<string>();
-
-            await Task.Run(() =>
-            {
-                foreach (var country in Countries)
+                if (!Directory.Exists("Flags"))
                 {
-                    using (WebClient client = new WebClient())
-                    {
-                        var url = new Uri(country.Flag);
-                        string fileName = $"{country.Alpha3Code}.svg";
-                        string path = Path.Combine(Environment.CurrentDirectory, @"Flags\", fileName);
-
-                        client.DownloadFileAsync(url, path);
-                    }
+                    Directory.CreateDirectory("Flags");
                 }
-            });
+
+                List<string> Flags = new List<string>();
+
+                await Task.Run(() =>
+                {
+                    foreach (var country in Countries)
+                    {
+                        using (WebClient client = new WebClient())
+                        {
+                            var url = new Uri(country.Flag);
+                            string fileName = $"{country.Alpha3Code}.svg";
+                            string path = Path.Combine(Environment.CurrentDirectory, @"Flags\", fileName);
+
+                            client.DownloadFileAsync(url, path);
+                        }
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                DialogService.ShowMessageBox("Error", ex.Message);
+            }
         }
     }
 }
